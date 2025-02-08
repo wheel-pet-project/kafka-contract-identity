@@ -8,6 +8,7 @@
         <Title>From.IdentityKafkaEvents</Title>
         <Authors>nikitaberezhko</Authors>
         <RepositoryUrl>https://gitlab.com/carsharing-backend/contracts/kafka/fromidentitykafkaevents</RepositoryUrl>
+        <Version>1.0.1</Version>
     </PropertyGroup>
 
 </Project>

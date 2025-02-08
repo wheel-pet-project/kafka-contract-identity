@@ -2,10 +2,10 @@ namespace From.IdentityKafkaEvents;
 
 public class AccountCreated
 {
-    public AccountCreated(Guid eventId, Guid id, string email, string phone, string confirmationUrl)
+    public AccountCreated(Guid eventId, Guid accountId, string email, string phone, string confirmationUrl)
     {
         EventId = eventId;
-        Id = id;
+        AccountId = accountId;
         Email = email;
         Phone = phone;
         ConfirmationUrl = confirmationUrl;
@@ -13,7 +13,7 @@ public class AccountCreated
     
     public Guid EventId { get; private set; }
     
-    public Guid Id { get; private set; }
+    public Guid AccountId { get; private set; }
     
     public string Email { get; private set; }
     
