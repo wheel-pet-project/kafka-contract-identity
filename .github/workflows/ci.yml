@@ -26,8 +26,10 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore FromIdentityKafkaEvents.sln
       - name: Pack
-        run: dotnet pack -c Release --no-build --output nupgk
+        run: dotnet pack FromIdentityKafkaEvents.sln -c Release --output nupgk
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
