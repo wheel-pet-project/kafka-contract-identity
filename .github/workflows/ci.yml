@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    tags:
+      - "v*"
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build
+        run: dotnet build -c Release
+
+  package:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        run: dotnet restore FromIdentityKafkaEvents.sln
+      - name: Build (Release)
+        run: dotnet build From.IdentityKafkaEvents/From.IdentityKafkaEvents.csproj -c Release --no-restore
+      - name: Pack
+        run: dotnet pack From.IdentityKafkaEvents/From.IdentityKafkaEvents.csproj -c Release --no-build --output nupgk
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupgk
+          path: nupgk
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nupgk
+          path: nupgk
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Configure GitLab NuGet source
+        env:
+          GITLAB_API_V4_URL: ${{ secrets.GITLAB_API_V4_URL }}
+          GITLAB_PROJECT_ID: ${{ secrets.GITLAB_PROJECT_ID }}
+          PACKAGE_REGISTRY_PAT: ${{ secrets.PACKAGE_REGISTRY_PAT }}
+          NUGET_USERNAME: ${{ secrets.NUGET_USERNAME }}
+        run: |
+          dotnet nuget add source "${GITLAB_API_V4_URL}/projects/${GITLAB_PROJECT_ID}/packages/nuget/index.json" --name gitlab --username "${NUGET_USERNAME}" --password "${PACKAGE_REGISTRY_PAT}" --store-password-in-clear-text
+      - name: Push packages to GitLab Package Registry
+        env:
+          PACKAGE_REGISTRY_PAT: ${{ secrets.PACKAGE_REGISTRY_PAT }}
+        run: |
+          dotnet nuget push nupgk/*.nupkg --api-key "${PACKAGE_REGISTRY_PAT}" --source gitlab
